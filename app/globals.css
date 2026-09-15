@@ -237,6 +237,24 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Faint grid backdrop, used behind the node graph */
+.grid-backdrop {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(circle at center, #000 40%, transparent 75%);
+  mask-image: radial-gradient(circle at center, #000 40%, transparent 75%);
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+}
+.glow-pulse {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
 /* Radiating concentric rings (final CTA backdrop) */
 .rings {
   position: absolute;

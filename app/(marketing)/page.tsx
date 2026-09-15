@@ -17,6 +17,8 @@ import {
   IconSearch,
   IconChevron,
   IconClose,
+  IconRadar,
+  IconGauge,
 } from "@/components/icons";
 
 const SOLUTIONS_MENU = [
@@ -158,15 +160,16 @@ export default function MarketingHome() {
       {/* Big single app screenshot */}
       <BigScreenshot />
 
+      {/* Coaching / scorecards */}
+      <Coaching />
+
       {/* Works where you meet: node graph */}
       <NodeGraph />
 
       {/* Solutions grid */}
       <section id="solutions" className="border-t border-[var(--space-border)] py-20 px-6">
         <Reveal className="max-w-[1100px] mx-auto">
-          <p className="text-[13px] font-semibold uppercase tracking-wider text-center" style={{ color: "#7db4ff" }}>
-            Every team in flow
-          </p>
+          <ScrambleText text="Every team in flow" className="block text-[13px] font-semibold uppercase tracking-wider text-center" style={{ color: "#7db4ff" }} />
           <h2 className="text-center text-[clamp(28px,4vw,46px)] font-light tracking-[-0.025em] mt-2">
             One notetaker, tuned to how each team actually talks.
           </h2>
@@ -258,6 +261,89 @@ function Reveal({
     <div ref={ref} className={`reveal ${visible ? "in-view" : ""} ${className}`} style={{ ...style, transitionDelay: `${delay}ms` }}>
       {children}
     </div>
+  );
+}
+
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function ScrambleText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
+  const [display, setDisplay] = useState(text);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        let frame = 0;
+        const totalFrames = 18;
+        const tick = () => {
+          frame += 1;
+          const revealed = Math.floor((frame / totalFrames) * text.length);
+          setDisplay(
+            text
+              .split("")
+              .map((c, i) => (c === " " ? " " : i < revealed ? c : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]))
+              .join(""),
+          );
+          if (frame < totalFrames) raf = requestAnimationFrame(() => setTimeout(tick, 28));
+          else setDisplay(text);
+        };
+        tick();
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [text]);
+
+  return (
+    <span ref={ref} className={className} style={style}>
+      {display}
+    </span>
+  );
+}
+
+/** Words dim until scroll carries the paragraph through the viewport's focal band. */
+function ScrollColorText({ text, className }: { text: string; className?: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const p = 1 - (rect.top - vh * 0.15) / (vh * 0.65);
+      setProgress(Math.min(1, Math.max(0, p)));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const words = text.split(" ");
+  const activeCount = progress * words.length;
+
+  return (
+    <p ref={ref} className={className}>
+      {words.map((w, i) => (
+        <span
+          key={i}
+          style={{
+            color: i < activeCount ? "#fff" : "var(--space-text-2)",
+            opacity: i < activeCount ? 1 : 0.4,
+            transition: "color 0.15s linear, opacity 0.15s linear",
+          }}
+        >
+          {w}{" "}
+        </span>
+      ))}
+    </p>
   );
 }
 
@@ -583,10 +669,10 @@ function BigScreenshot() {
     <section className="relative border-t border-[var(--space-border)] py-20 px-6 text-center">
       <Reveal>
       <h2 className="text-[clamp(26px,4vw,44px)] font-light tracking-[-0.025em]">Make your team unstoppable</h2>
-      <p className="text-[14px] text-[var(--space-text-2)] mt-2 max-w-[480px] mx-auto">
-        Accurate meeting notes, call summaries and keyword alerts mean your team
-        stays aligned without the extra meeting about the meeting.
-      </p>
+      <ScrollColorText
+        text="Accurate meeting notes, call summaries and keyword alerts mean your team stays aligned without the extra meeting about the meeting."
+        className="text-[15px] mt-3 max-w-[480px] mx-auto"
+      />
       <div className="mt-10 max-w-[900px] mx-auto rounded-[28px] overflow-hidden shadow-2xl hover-lift" style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}>
         <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "var(--space-border)" }}>
           <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
@@ -630,24 +716,85 @@ function BigScreenshot() {
   );
 }
 
+function Coaching() {
+  const metrics = [
+    { label: "Talk/listen ratio", value: 62, color: "#00beff" },
+    { label: "Questions asked", value: 78, color: "#9600ff" },
+    { label: "Next steps confirmed", value: 91, color: "#ffa8bb" },
+  ];
+  return (
+    <section className="relative border-t border-[var(--space-border)] py-24 px-6 overflow-hidden">
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 w-[600px] h-[400px] orb opacity-15 blur-[120px]" />
+      <Reveal className="relative max-w-[720px] mx-auto text-center">
+        <ScrambleText text="Coaching, built in" className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "#c9a3ff" }} />
+        <ScrollColorText
+          text="Every call offers real-time coaching moments and follow-up metrics with AI Scorecards that elevate performance across the board."
+          className="text-[clamp(24px,3.6vw,38px)] font-light tracking-[-0.02em] leading-[1.25] mt-3"
+        />
+      </Reveal>
+
+      <Reveal delay={120} className="relative max-w-[620px] mx-auto mt-10 rounded-[28px] p-6" style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" } as React.CSSProperties}>
+        <div className="flex items-center gap-2">
+          <span className="w-8 h-8 rounded-lg grid place-items-center" style={{ background: "var(--accent-gradient)" }}>
+            <IconGauge width={16} height={16} className="text-white" />
+          </span>
+          <p className="text-[13.5px] font-semibold">Discovery — Brightwave scorecard</p>
+        </div>
+        <div className="mt-5 space-y-4">
+          {metrics.map((m) => (
+            <div key={m.label}>
+              <div className="flex items-center justify-between text-[12.5px] mb-1.5">
+                <span className="text-[var(--space-text-2)]">{m.label}</span>
+                <span className="font-semibold">{m.value}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.color }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 pt-4 border-t border-[var(--space-border)] flex items-start gap-2.5">
+          <IconRadar width={15} height={15} className="mt-0.5 shrink-0" style={{ color: "#c9a3ff" }} />
+          <p className="text-[12.5px] text-[var(--space-text-2)] leading-relaxed">
+            Coaching moment: Sam asked three open questions before pitching, then confirmed next steps twice. Flagged for the team playbook.
+          </p>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
 function NodeGraph() {
   const nodes = PLATFORMS;
-  const radius = 160;
+  const radius = 170;
   return (
     <section id="integrations" className="relative border-t border-[var(--space-border)] py-24 px-6 overflow-hidden">
-      <Reveal className="relative max-w-[600px] mx-auto" style={{ height: 380 } as React.CSSProperties}>
+      <Reveal className="text-center">
+        <ScrambleText text="Integrates with your entire stack" className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "#7db4ff" }} />
+        <h2 className="text-[clamp(26px,3.6vw,40px)] font-light tracking-[-0.025em] mt-2">Works where you meet.</h2>
+      </Reveal>
+
+      <Reveal delay={100} className="relative max-w-[640px] mx-auto mt-10" style={{ height: 400 } as React.CSSProperties}>
+        <div className="absolute inset-0 grid-backdrop" />
         {nodes.map((label, i) => {
           const angle = (i / nodes.length) * 2 * Math.PI - Math.PI / 2;
           const x = Math.cos(angle) * radius;
           const y = Math.sin(angle) * radius;
           return (
-            <svg key={`line-${label}`} className="absolute left-1/2 top-1/2 -z-10" width={radius * 2} height={radius * 2} style={{ transform: "translate(-50%,-50%)" }}>
+            <svg key={`line-${label}`} className="absolute left-1/2 top-1/2" width={radius * 2} height={radius * 2} style={{ transform: "translate(-50%,-50%)" }}>
               <line x1={radius} y1={radius} x2={radius + x} y2={radius + y} stroke="var(--space-border)" strokeWidth={1} />
             </svg>
           );
         })}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-[28px] grid place-items-center orb-float" style={{ background: "var(--accent-gradient)" }}>
-          <IconLogo width={30} height={30} style={{ color: "#fff" }} />
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full glow-pulse"
+          style={{ background: "radial-gradient(circle, rgba(150,0,255,0.5) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full grid place-items-center"
+          style={{ background: "#0a0a0f", border: "1px solid var(--space-border)" }}
+        >
+          <IconLogo width={34} height={34} />
         </div>
         {nodes.map((label, i) => {
           const angle = (i / nodes.length) * 2 * Math.PI - Math.PI / 2;
@@ -656,21 +803,63 @@ function NodeGraph() {
           return (
             <span
               key={label}
-              className="pill-badge absolute !py-2 !px-3.5 !text-[12.5px]"
+              className="pill-badge absolute !py-2 !px-3.5 !text-[12.5px] hover-lift"
               style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%,-50%)", background: "var(--space-surface)" }}
             >
-              {label}
+              <PlatformIcon label={label} /> {label}
             </span>
           );
         })}
       </Reveal>
-      <Reveal className="relative text-center mt-2" delay={150}>
-        <h2 className="text-[clamp(26px,3.6vw,40px)] font-light tracking-[-0.025em]">Fathom adapts to your workflow,<br />not the other way around.</h2>
+
+      <Reveal delay={150} className="relative text-center mt-10">
+        <ScrollColorText
+          text="Fathom adapts to your workflow, not the other way around."
+          className="text-[clamp(22px,3.2vw,32px)] font-light tracking-[-0.02em] max-w-[560px] mx-auto"
+        />
         <Link href="/library" className="btn btn-primary btn-lg mt-6 inline-flex">
           Explore integrations <IconArrowRight width={16} height={16} />
         </Link>
       </Reveal>
     </section>
+  );
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  Zoom: "#2d8cff",
+  "Google Meet": "#00ac47",
+  "Microsoft Teams": "#5b5fc7",
+  Slack: "#e01e5a",
+  Notion: "#2b2b2b",
+  HubSpot: "#ff7a59",
+};
+
+/** Small, simplified glyphs (not the trademarked logos) that still read as
+ *  each platform at a glance, colored to match its brand. */
+function PlatformIcon({ label }: { label: string }) {
+  const color = PLATFORM_COLORS[label] ?? "#fff";
+  const glyph = (() => {
+    switch (label) {
+      case "Zoom":
+        return <><rect x="2" y="5" width="11" height="10" rx="2.5" fill={color} /><path d="M13 8.3 16.3 6c.5-.35 1.2 0 1.2.6v6.8c0 .6-.7.95-1.2.6L13 11.7Z" fill={color} /></>;
+      case "Google Meet":
+        return <><rect x="2" y="5" width="11" height="10" rx="2" fill={color} /><path d="M13 8.5 17 6v8l-4-2.5Z" fill={color} opacity="0.7" /></>;
+      case "Microsoft Teams":
+        return <><circle cx="8" cy="7" r="3" fill={color} /><rect x="3" y="10" width="12" height="7" rx="2" fill={color} opacity="0.85" /></>;
+      case "Slack":
+        return <><rect x="3" y="3" width="5" height="5" rx="1.5" fill={color} /><rect x="12" y="3" width="5" height="5" rx="1.5" fill={color} opacity="0.7" /><rect x="3" y="12" width="5" height="5" rx="1.5" fill={color} opacity="0.5" /><rect x="12" y="12" width="5" height="5" rx="1.5" fill={color} opacity="0.35" /></>;
+      case "Notion":
+        return <rect x="3" y="3" width="14" height="14" rx="3" fill={color} />;
+      case "HubSpot":
+        return <><circle cx="10" cy="10" r="7" fill="none" stroke={color} strokeWidth="2" /><circle cx="10" cy="10" r="2.4" fill={color} /></>;
+      default:
+        return <circle cx="10" cy="10" r="6" fill={color} />;
+    }
+  })();
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="shrink-0">
+      {glyph}
+    </svg>
   );
 }
 
