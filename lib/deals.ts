@@ -3,7 +3,7 @@
 // owner, and synced fields — as local seed data. No real Salesforce/HubSpot
 // connection; the "Sync" affordances are labeled as such.
 
-export type DealStage = "discovery" | "qualified" | "proposal" | "negotiation" | "closed_won";
+export type DealStage = "discovery" | "qualified" | "proposal" | "negotiation" | "closed_won" | "closed_lost";
 export type CrmSystem = "salesforce" | "hubspot" | null;
 export type Health = "green" | "yellow" | "red";
 
@@ -28,7 +28,12 @@ export const STAGES: { id: DealStage; label: string }[] = [
   { id: "proposal", label: "Proposal" },
   { id: "negotiation", label: "Negotiation" },
   { id: "closed_won", label: "Closed Won" },
+  { id: "closed_lost", label: "Closed Lost" },
 ];
+
+/** Stages a deal can still move forward through (excludes the closed_lost
+ * side-exit, which is reached via "Mark as lost" rather than advancing). */
+export const OPEN_STAGE_FLOW: DealStage[] = ["discovery", "qualified", "proposal", "negotiation", "closed_won"];
 
 export const DEALS: Deal[] = [
   {

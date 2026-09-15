@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { usePlayer } from "@/lib/usePlayer";
 import { useNarration } from "@/lib/useNarration";
@@ -14,10 +15,11 @@ import { Transcript } from "./meeting/Transcript";
 import { RightPanel } from "./meeting/RightPanel";
 import { ShareModal } from "./meeting/ShareModal";
 import { AvatarStack, PlatformBadge } from "./ui";
-import { IconChevron, IconShare, IconEdit, IconDownload, IconBriefcase } from "./icons";
+import { IconChevron, IconShare, IconEdit, IconDownload, IconBriefcase, IconMenu, IconAlert } from "./icons";
 
 export function MeetingDetail({ id }: { id: string }) {
-  const { getMeeting, addHighlight: addHighlightToStore, renameMeeting, hydrated } = useStore();
+  const router = useRouter();
+  const { getMeeting, addHighlight: addHighlightToStore, renameMeeting, deleteMeeting, hydrated } = useStore();
   const meeting = getMeeting(id);
   const durationMs = (meeting?.durationS ?? 0) * 1000;
   const player = usePlayer(durationMs);
@@ -25,6 +27,8 @@ export function MeetingDetail({ id }: { id: string }) {
   const [audioOn, setAudioOn] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const currentCue = useMemo(
     () => meeting?.transcript.find((c) => player.currentMs >= c.startMs && player.currentMs < c.endMs),
@@ -131,7 +135,45 @@ export function MeetingDetail({ id }: { id: string }) {
         <button onClick={() => setShareOpen(true)} className="btn btn-primary">
           <IconShare width={16} height={16} /> Share
         </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="btn btn-ghost !px-2"
+            title="More actions"
+          >
+            <IconMenu width={16} height={16} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-[calc(100%+6px)] w-[220px] card p-1.5 z-20 animate-in" style={{ animationDuration: "0.12s" }}>
+              {!confirmDelete ? (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] text-[var(--red)] hover:bg-[var(--surface-2)] transition-colors"
+                >
+                  <IconAlert width={13} height={13} /> Delete meeting
+                </button>
+              ) : (
+                <div className="p-2">
+                  <p className="text-[12px] text-[var(--text-2)] mb-2">Delete this meeting? This can&rsquo;t be undone.</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { deleteMeeting(meeting.id); router.push("/library"); }}
+                      className="btn !py-1.5 !text-[12px] flex-1 justify-center"
+                      style={{ background: "var(--red)", color: "#fff" }}
+                    >
+                      Delete
+                    </button>
+                    <button onClick={() => { setConfirmDelete(false); setMenuOpen(false); }} className="btn btn-soft !py-1.5 !text-[12px] flex-1 justify-center">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
+      {menuOpen && <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />}
 
       {/* Body */}
       <div className="flex-1 min-h-0 grid grid-cols-[1fr_400px] gap-4 p-4">

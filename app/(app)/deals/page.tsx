@@ -22,6 +22,7 @@ function DealsPageInner() {
   const searchParams = useSearchParams();
   const [openDealId, setOpenDealId] = useState<string | null>(searchParams.get("deal"));
   const [query, setQuery] = useState("");
+  const [ownerFilter, setOwnerFilter] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
 
   const allDeals = useMemo<Deal[]>(() => [...DEALS, ...customDeals], [customDeals]);
@@ -31,20 +32,24 @@ function DealsPageInner() {
     [allDeals, dealStages],
   );
 
+  const owners = useMemo(() => Array.from(new Set(deals.map((d) => d.owner))).sort(), [deals]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return deals;
-    return deals.filter(
-      (d) => d.company.toLowerCase().includes(q) || d.contactName.toLowerCase().includes(q) || d.owner.toLowerCase().includes(q),
-    );
-  }, [deals, query]);
+    return deals.filter((d) => {
+      if (ownerFilter !== "all" && d.owner !== ownerFilter) return false;
+      if (!q) return true;
+      return d.company.toLowerCase().includes(q) || d.contactName.toLowerCase().includes(q) || d.owner.toLowerCase().includes(q);
+    });
+  }, [deals, query, ownerFilter]);
 
   const columns = useMemo(() => dealsByStage(filtered), [filtered]);
   const openDeal = deals.find((d) => d.id === openDealId) ?? null;
 
-  const openValue = deals.filter((d) => d.stage !== "closed_won").reduce((s, d) => s + d.valueUsd, 0);
+  const isOpenStage = (d: Deal) => d.stage !== "closed_won" && d.stage !== "closed_lost";
+  const openValue = deals.filter(isOpenStage).reduce((s, d) => s + d.valueUsd, 0);
   const wonValue = deals.filter((d) => d.stage === "closed_won").reduce((s, d) => s + d.valueUsd, 0);
-  const needsAttention = deals.filter((d) => d.health !== "green" && d.stage !== "closed_won").length;
+  const needsAttention = deals.filter((d) => d.health !== "green" && isOpenStage(d)).length;
 
   return (
     <div className="px-8 py-8 max-w-[1400px] mx-auto">
@@ -61,6 +66,14 @@ function DealsPageInner() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <select
+            value={ownerFilter}
+            onChange={(e) => setOwnerFilter(e.target.value)}
+            className="px-3 py-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13.5px] outline-none focus:border-[var(--accent)] transition-colors"
+          >
+            <option value="all">All owners</option>
+            {owners.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
           <div className="relative">
             <IconSearch width={15} height={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
             <input

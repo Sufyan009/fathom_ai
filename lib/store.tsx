@@ -21,6 +21,13 @@ interface Playlist {
   highlightRefs: { meetingId: string; highlightId: string }[];
 }
 
+interface DealNote {
+  id: string;
+  text: string;
+  author: string;
+  at: string;
+}
+
 interface PersistState {
   meetings: Meeting[];
   playlists: Playlist[];
@@ -28,6 +35,8 @@ interface PersistState {
   dealStages: Record<string, DealStage>;
   dealSyncedAt: Record<string, string>;
   customDeals: Deal[];
+  dealNextSteps: Record<string, string>;
+  dealNotes: Record<string, DealNote[]>;
 }
 
 interface StoreValue extends PersistState {
@@ -36,6 +45,7 @@ interface StoreValue extends PersistState {
   getMeeting: (id: string) => Meeting | undefined;
   addMeeting: (meeting: Meeting) => void;
   renameMeeting: (meetingId: string, title: string) => void;
+  deleteMeeting: (meetingId: string) => void;
   toggleActionItem: (meetingId: string, itemId: string) => void;
   addHighlight: (meetingId: string, h: Omit<Highlight, "id" | "createdAt" | "createdBy">) => void;
   removeHighlight: (meetingId: string, highlightId: string) => void;
@@ -47,6 +57,8 @@ interface StoreValue extends PersistState {
   setDealStage: (dealId: string, stage: DealStage) => void;
   syncDeal: (dealId: string) => void;
   addDeal: (deal: Omit<Deal, "id" | "lastActivityAt">) => void;
+  setDealNextStep: (dealId: string, text: string) => void;
+  addDealNote: (dealId: string, text: string) => void;
   reset: () => void;
 }
 
@@ -71,6 +83,8 @@ function seedState(): PersistState {
     dealStages: {},
     dealSyncedAt: {},
     customDeals: [],
+    dealNextSteps: {},
+    dealNotes: {},
   };
 }
 
@@ -136,6 +150,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mutateMeeting(meetingId, (m) => ({ ...m, title })),
     [mutateMeeting],
   );
+
+  const deleteMeeting = useCallback((meetingId: string) => {
+    setState((s) => ({ ...s, meetings: s.meetings.filter((m) => m.id !== meetingId) }));
+  }, []);
 
   const toggleActionItem = useCallback(
     (meetingId: string, itemId: string) =>
@@ -243,6 +261,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setDealNextStep = useCallback((dealId: string, text: string) => {
+    setState((s) => ({ ...s, dealNextSteps: { ...s.dealNextSteps, [dealId]: text } }));
+  }, []);
+
+  const addDealNote = useCallback((dealId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setState((s) => ({
+      ...s,
+      dealNotes: {
+        ...s.dealNotes,
+        [dealId]: [
+          ...(s.dealNotes[dealId] ?? []),
+          { id: nextId("note"), text: trimmed, author: USERS.find((u) => u.id === CURRENT_USER_ID)!.name, at: new Date().toISOString() },
+        ],
+      },
+    }));
+  }, []);
+
   const reset = useCallback(() => {
     try {
       window.localStorage.removeItem(LS_KEY);
@@ -260,6 +297,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       getMeeting,
       addMeeting,
       renameMeeting,
+      deleteMeeting,
       toggleActionItem,
       addHighlight,
       removeHighlight,
@@ -271,6 +309,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDealStage,
       syncDeal,
       addDeal,
+      setDealNextStep,
+      addDealNote,
       reset,
     }),
     [
@@ -279,6 +319,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       getMeeting,
       addMeeting,
       renameMeeting,
+      deleteMeeting,
       toggleActionItem,
       addHighlight,
       removeHighlight,
@@ -290,6 +331,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDealStage,
       syncDeal,
       addDeal,
+      setDealNextStep,
+      addDealNote,
       reset,
     ],
   );

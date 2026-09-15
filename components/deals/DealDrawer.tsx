@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Deal } from "@/lib/deals";
-import { STAGES } from "@/lib/deals";
+import { OPEN_STAGE_FLOW, STAGES } from "@/lib/deals";
 import { useStore } from "@/lib/store";
 import { fmtUsd, fmtDaysAgo, fmtDate } from "@/lib/format";
 import { Avatar } from "../ui";
-import { IconClose, IconPlay, IconRefresh, IconCheck, IconAlert, IconGauge, IconRadar } from "../icons";
+import { IconClose, IconPlay, IconRefresh, IconCheck, IconAlert, IconGauge, IconRadar, IconEdit } from "../icons";
 
 const CRM_LABEL: Record<NonNullable<Deal["crmSystem"]>, string> = {
   salesforce: "Salesforce",
@@ -28,21 +28,43 @@ function scorecardFor(dealId: string) {
 }
 
 export function DealDrawer({ deal, onClose }: { deal: Deal; onClose: () => void }) {
-  const { getMeeting, setDealStage, syncDeal, dealSyncedAt } = useStore();
+  const { getMeeting, setDealStage, syncDeal, dealSyncedAt, dealNextSteps, setDealNextStep, dealNotes, addDealNote, currentUser } = useStore();
   const [justSynced, setJustSynced] = useState(false);
-  const stageIndex = STAGES.findIndex((s) => s.id === deal.stage);
+  const [editingNextStep, setEditingNextStep] = useState(false);
+  const [nextStepDraft, setNextStepDraft] = useState("");
+  const [noteDraft, setNoteDraft] = useState("");
+
+  const isClosed = deal.stage === "closed_won" || deal.stage === "closed_lost";
+  const flowIndex = OPEN_STAGE_FLOW.indexOf(deal.stage as (typeof OPEN_STAGE_FLOW)[number]);
+  const stageIndex = flowIndex === -1 ? OPEN_STAGE_FLOW.length - 1 : flowIndex; // closed_lost renders as fully-lit but red
+  const stageLabel = STAGES.find((s) => s.id === deal.stage)!.label;
   const meetings = deal.meetingIds.map((id) => getMeeting(id)).filter(Boolean) as NonNullable<ReturnType<typeof getMeeting>>[];
   const syncedAt = dealSyncedAt[deal.id];
+  const nextStep = dealNextSteps[deal.id] ?? deal.nextStep;
+  const notes = dealNotes[deal.id] ?? [];
 
   const advance = () => {
-    const next = STAGES[stageIndex + 1];
-    if (next) setDealStage(deal.id, next.id);
+    const next = OPEN_STAGE_FLOW[flowIndex + 1];
+    if (next) setDealStage(deal.id, next);
   };
+
+  const markLost = () => setDealStage(deal.id, "closed_lost");
 
   const handleSync = () => {
     syncDeal(deal.id);
     setJustSynced(true);
     setTimeout(() => setJustSynced(false), 1800);
+  };
+
+  const saveNextStep = () => {
+    if (nextStepDraft.trim()) setDealNextStep(deal.id, nextStepDraft.trim());
+    setEditingNextStep(false);
+  };
+
+  const submitNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    addDealNote(deal.id, noteDraft);
+    setNoteDraft("");
   };
 
   return (
@@ -68,23 +90,32 @@ export function DealDrawer({ deal, onClose }: { deal: Deal; onClose: () => void 
           <div>
             <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)] mb-2">
               <span>Pipeline stage</span>
-              {stageIndex < STAGES.length - 1 && (
-                <button onClick={advance} className="text-[var(--accent)] normal-case font-semibold hover:underline">
-                  Advance stage →
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {!isClosed && flowIndex < OPEN_STAGE_FLOW.length - 1 && (
+                  <button onClick={advance} className="text-[var(--accent)] normal-case font-semibold hover:underline">
+                    Advance stage →
+                  </button>
+                )}
+                {!isClosed && (
+                  <button onClick={markLost} className="text-[var(--red)] normal-case font-semibold hover:underline">
+                    Mark as lost
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-1">
-              {STAGES.map((s, i) => (
+              {OPEN_STAGE_FLOW.map((s, i) => (
                 <div
-                  key={s.id}
+                  key={s}
                   className="flex-1 h-1.5 rounded-full"
-                  style={{ background: i <= stageIndex ? "var(--accent)" : "var(--surface-2)" }}
-                  title={s.label}
+                  style={{ background: i <= stageIndex ? (deal.stage === "closed_lost" ? "var(--red)" : "var(--accent)") : "var(--surface-2)" }}
+                  title={STAGES.find((st) => st.id === s)!.label}
                 />
               ))}
             </div>
-            <p className="text-[13px] font-semibold mt-2">{STAGES[stageIndex].label}</p>
+            <p className="text-[13px] font-semibold mt-2" style={deal.stage === "closed_lost" ? { color: "var(--red)" } : undefined}>
+              {stageLabel}
+            </p>
           </div>
 
           {/* Deal value + owner */}
@@ -102,10 +133,60 @@ export function DealDrawer({ deal, onClose }: { deal: Deal; onClose: () => void 
             </div>
           </div>
 
-          {/* Next step */}
+          {/* Next step — editable */}
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)] mb-1.5">Next step</p>
-            <p className="text-[13.5px]">{deal.nextStep}</p>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)]">Next step</p>
+              {!editingNextStep && (
+                <button
+                  onClick={() => { setNextStepDraft(nextStep); setEditingNextStep(true); }}
+                  className="text-[var(--text-3)] hover:text-[var(--accent)]"
+                  title="Edit next step"
+                >
+                  <IconEdit width={12} height={12} />
+                </button>
+              )}
+            </div>
+            {editingNextStep ? (
+              <div className="flex gap-2">
+                <input
+                  autoFocus
+                  value={nextStepDraft}
+                  onChange={(e) => setNextStepDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveNextStep(); if (e.key === "Escape") setEditingNextStep(false); }}
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-[var(--surface-2)] text-[13.5px] outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+                />
+                <button onClick={saveNextStep} className="btn btn-primary !py-1.5 !text-[12px]">Save</button>
+              </div>
+            ) : (
+              <p className="text-[13.5px]">{nextStep}</p>
+            )}
+          </div>
+
+          {/* Activity / notes */}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)] mb-1.5">
+              Activity ({notes.length})
+            </p>
+            {notes.length > 0 && (
+              <div className="space-y-2.5 mb-2.5">
+                {notes.map((n) => (
+                  <div key={n.id} className="text-[13px]">
+                    <p>{n.text}</p>
+                    <p className="text-[11px] text-[var(--text-3)] mt-0.5">{n.author} · {fmtDaysAgo(n.at)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <form onSubmit={submitNote} className="flex gap-2">
+              <input
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                placeholder={`Log a note as ${currentUser.name.split(" ")[0]}...`}
+                className="flex-1 px-2.5 py-1.5 rounded-lg bg-[var(--surface-2)] text-[13px] outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+              />
+              <button type="submit" className="btn btn-soft !py-1.5 !text-[12px]" disabled={!noteDraft.trim()}>Add</button>
+            </form>
           </div>
 
           {/* CRM sync */}
