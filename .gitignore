@@ -38,3 +38,6 @@ Thumbs.db
 #
 # The capture script's own error log is noise, though:
 .agent-logs/.capture-errors.log
+
+# Local-only walkthrough notes, not part of the public submission.
+WALKTHROUGHSCRIPT.md
