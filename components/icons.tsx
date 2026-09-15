@@ -109,6 +109,18 @@ export const IconTrendUp = (p: P) => (
 export const IconRefresh = (p: P) => (
   <svg {...base(p)}><path d="M20 11a8 8 0 0 0-14.9-3.5M4 13a8 8 0 0 0 14.9 3.5" /><path d="M4 4v5h5M20 20v-5h-5" /></svg>
 );
+export const IconMenu = (p: P) => (
+  <svg {...base(p)}><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+);
+export const IconCommand = (p: P) => (
+  <svg {...base(p)}><path d="M9 3.5A2.5 2.5 0 1 0 6.5 6H17.5a2.5 2.5 0 1 0-2.5-2.5V17.5a2.5 2.5 0 1 0 2.5-2.5H6.5a2.5 2.5 0 1 0 2.5 2.5z" /></svg>
+);
+export const IconBell = (p: P) => (
+  <svg {...base(p)}><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z" /><path d="M9.5 17a2.5 2.5 0 0 0 5 0" /></svg>
+);
+export const IconUser = (p: P) => (
+  <svg {...base(p)}><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg>
+);
 export const IconLogo = (p: P) => (
   <svg width={26} height={26} viewBox="0 0 32 32" fill="none" {...p}>
     <rect width="32" height="32" rx="9" fill="var(--accent)" />
