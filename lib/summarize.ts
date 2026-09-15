@@ -10,16 +10,15 @@ function firstSentence(text: string): string {
   return (m ? m[1] : text).trim();
 }
 
-function pick(meeting: Meeting, keywords: string[], limit: number): string[] {
-  const seen = new Set<string>();
+function pick(meeting: Meeting, keywords: string[], limit: number, usedCues: Set<string>): string[] {
   const out: string[] = [];
   for (const c of meeting.transcript) {
+    if (usedCues.has(c.id)) continue;
     const low = c.text.toLowerCase();
     if (keywords.some((k) => low.includes(k))) {
       const s = firstSentence(c.text);
-      const key = s.toLowerCase();
-      if (!seen.has(key) && s.length > 12) {
-        seen.add(key);
+      if (s.length > 12) {
+        usedCues.add(c.id);
         out.push(`${c.speaker}: ${s}`);
         if (out.length >= limit) break;
       }
@@ -62,9 +61,11 @@ export function getSummary(meeting: Meeting, templateId: TemplateId): { summary:
   const authored = meeting.summaries.find((s) => s.templateId === templateId);
   if (authored) return { summary: authored, generated: false };
 
+  // Shared across sections so the same line never appears twice in one summary.
+  const usedCues = new Set<string>();
   const sections: SummarySection[] = SPEC[templateId].map(({ heading, keywords }) => ({
     heading,
-    bullets: pick(meeting, keywords, 4),
+    bullets: pick(meeting, keywords, 4, usedCues),
   }));
 
   // Always append next steps / follow-ups from action items.

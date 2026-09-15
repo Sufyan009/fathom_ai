@@ -30,6 +30,15 @@ function firstSentence(text: string): string {
   return (m ? m[1] : text).trim();
 }
 
+/** The sentence within a cue that actually contains the action-trigger
+ * phrase, not necessarily the first one — a cue like "That's reasonable.
+ * I'll rebalance the team this week." should surface the second sentence,
+ * not the throwaway lead-in. */
+function actionSentence(text: string): string {
+  const sentences = text.match(/[^.!?]+[.!?]?/g)?.map((s) => s.trim()).filter(Boolean) ?? [text];
+  return sentences.find((s) => ACTION_RE.test(s)) ?? sentences[0];
+}
+
 export function buildMeetingFromRecording(input: RecordInput): Meeting {
   const id = `m_rec_${Date.now().toString(36)}`;
 
@@ -61,7 +70,7 @@ export function buildMeetingFromRecording(input: RecordInput): Meeting {
     if (ACTION_RE.test(c.text)) {
       actionItems.push({
         id: `a${actionItems.length + 1}`,
-        text: firstSentence(c.text),
+        text: actionSentence(c.text),
         assignee: c.speaker,
         done: false,
         atMs: c.startMs,
