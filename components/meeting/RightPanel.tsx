@@ -1,15 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Meeting, TemplateId } from "@/lib/types";
 import { TEMPLATES } from "@/lib/templates";
 import { getSummary } from "@/lib/summarize";
+import { askFathom, type AskResult } from "@/lib/ask";
+import { buildFollowUpEmail, summaryToPlainText } from "@/lib/followup";
 import { useStore } from "@/lib/store";
 import { fmtClock } from "@/lib/format";
 import { Avatar } from "../ui";
-import { IconCheck, IconPlay, IconSparkle, IconStar, IconLightning, IconPlaylist } from "../icons";
+import {
+  IconCheck,
+  IconPlay,
+  IconSparkle,
+  IconStar,
+  IconLightning,
+  IconPlaylist,
+  IconCopy,
+  IconMail,
+  IconSend,
+} from "../icons";
 
-type Tab = "summary" | "actions" | "highlights" | "comments";
+type Tab = "summary" | "actions" | "highlights" | "comments" | "ask";
 
 export function RightPanel({
   meeting,
@@ -28,6 +40,7 @@ export function RightPanel({
     ["actions", "Actions", openCount || null],
     ["highlights", "Highlights", meeting.highlights.length || null],
     ["comments", "Comments", meeting.comments.length || null],
+    ["ask", "Ask", null],
   ];
 
   return (
@@ -55,8 +68,29 @@ export function RightPanel({
         {tab === "actions" && <ActionsTab meeting={meeting} onSeek={onSeek} />}
         {tab === "highlights" && <HighlightsTab meeting={meeting} onSeek={onSeek} />}
         {tab === "comments" && <CommentsTab meeting={meeting} currentMs={currentMs} onSeek={onSeek} />}
+        {tab === "ask" && <AskTab meeting={meeting} onSeek={onSeek} />}
       </div>
     </div>
+  );
+}
+
+function CopyButton({ text, label, icon }: { text: string; label: string; icon: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        } catch {
+          /* clipboard unavailable — ignore */
+        }
+      }}
+      className="btn btn-soft !py-1 !text-[12px]"
+    >
+      {icon} {copied ? "Copied!" : label}
+    </button>
   );
 }
 
@@ -85,6 +119,20 @@ function SummaryTab({ meeting }: { meeting: Meeting }) {
             {t.name}
           </button>
         ))}
+      </div>
+
+      {/* Copy / draft actions — Fathom's "share the recap" shortcuts */}
+      <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+        <CopyButton
+          text={summaryToPlainText(meeting, summary)}
+          label="Copy summary"
+          icon={<IconCopy width={13} height={13} />}
+        />
+        <CopyButton
+          text={buildFollowUpEmail(meeting, summary)}
+          label="Copy follow-up email"
+          icon={<IconMail width={13} height={13} />}
+        />
       </div>
 
       {generated && (
@@ -260,6 +308,87 @@ function CommentsTab({ meeting, currentMs, onSeek }: { meeting: Meeting; current
           className="flex-1 px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[13px] outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
         />
         <button type="submit" className="btn btn-primary !py-2">Post</button>
+      </form>
+    </div>
+  );
+}
+
+interface AskMsg {
+  role: "user" | "assistant";
+  text: string;
+  result?: AskResult;
+}
+
+function AskTab({ meeting, onSeek }: { meeting: Meeting; onSeek: (ms: number) => void }) {
+  const [msgs, setMsgs] = useState<AskMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const ask = (question: string) => {
+    if (!question.trim()) return;
+    setMsgs((m) => [...m, { role: "user", text: question }]);
+    setInput("");
+    setThinking(true);
+    setTimeout(() => {
+      const result = askFathom(question, [meeting]);
+      setMsgs((m) => [...m, { role: "assistant", text: result.answer, result }]);
+      setThinking(false);
+      setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }, 350);
+  };
+
+  return (
+    <div className="flex flex-col h-full animate-in">
+      <div className="flex-1 space-y-3">
+        {msgs.length === 0 && (
+          <Empty icon={<IconSparkle />} text="Ask a question about just this call — answers cite the transcript." />
+        )}
+        {msgs.map((m, i) =>
+          m.role === "user" ? (
+            <div key={i} className="flex justify-end">
+              <div className="bg-[var(--accent)] text-white rounded-2xl rounded-br-md px-3 py-1.5 text-[13px] max-w-[90%]">
+                {m.text}
+              </div>
+            </div>
+          ) : (
+            <div key={i} className="text-[13px]">
+              <p className="leading-relaxed">{m.text}</p>
+              {m.result && m.result.sources.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  {m.result.sources.map((s, j) => (
+                    <button
+                      key={j}
+                      onClick={() => onSeek(s.startMs)}
+                      className="w-full text-left card !shadow-none p-2 hover:border-[var(--accent)] transition-colors"
+                    >
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[var(--accent)]">
+                        <IconPlay width={10} height={10} /> {fmtClock(s.startMs)} · {s.speaker}
+                      </span>
+                      <p className="text-[12.5px] mt-0.5 text-[var(--text)]">{s.text}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ),
+        )}
+        {thinking && <p className="text-[12.5px] text-[var(--text-3)]">Thinking…</p>}
+        <div ref={endRef} />
+      </div>
+      <form
+        onSubmit={(e) => { e.preventDefault(); ask(input); }}
+        className="mt-3 pt-3 border-t border-[var(--border)] flex gap-2"
+      >
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask about this call…"
+          className="flex-1 px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[13px] outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+        />
+        <button type="submit" className="btn btn-primary !py-2" disabled={!input.trim()}>
+          <IconSend width={14} height={14} />
+        </button>
       </form>
     </div>
   );

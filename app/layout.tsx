@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Sora, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
-import { Sidebar } from "@/components/Sidebar";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+// Sora is fathom.ai's real brand typeface — verified from their site's
+// computed styles (body, h1-h5 all resolve to "Sora, Arial, sans-serif").
+const sora = Sora({ variable: "--font-sora", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -15,14 +16,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full">
-        <StoreProvider>
-          <div className="flex">
-            <Sidebar />
-            <main className="flex-1 min-w-0 min-h-screen">{children}</main>
-          </div>
-        </StoreProvider>
+    <html lang="en" className={`${sora.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="min-h-full" suppressHydrationWarning>
+        <StoreProvider>{children}</StoreProvider>
       </body>
     </html>
   );

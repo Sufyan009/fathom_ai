@@ -67,8 +67,9 @@ export function askFathom(question: string, meetings: Meeting[]): AskResult {
   }
 
   if (top.length === 0) {
+    const scope = meetings.length === 1 ? "this call" : `your ${meetings.length} calls`;
     return {
-      answer: `I couldn't find anything about that across your ${meetings.length} calls. Try different words, or check the transcript directly.`,
+      answer: `I couldn't find anything about that across ${scope}. Try different words, or check the transcript directly.`,
       sources: [],
     };
   }
@@ -76,12 +77,18 @@ export function askFathom(question: string, meetings: Meeting[]): AskResult {
   const meetingCount = new Set(top.map((t) => t.meetingId)).size;
   const answer =
     `Here's what came up across ${meetingCount} call${meetingCount !== 1 ? "s" : ""}. ` +
-    `The most relevant moment: ${top[0].speaker} in “${top[0].meetingTitle}” — “${firstSentence(top[0].text)}” ` +
+    `The most relevant moment: ${top[0].speaker} in "${top[0].meetingTitle}", saying "${firstSentence(top[0].text)}" ` +
     `See the sourced moments below to jump straight to each one.`;
 
   return {
     answer,
-    sources: top.map(({ score, ...s }) => s),
+    sources: top.map((t): AskSource => ({
+      meetingId: t.meetingId,
+      meetingTitle: t.meetingTitle,
+      speaker: t.speaker,
+      startMs: t.startMs,
+      text: t.text,
+    })),
   };
 }
 

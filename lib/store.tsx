@@ -11,6 +11,7 @@ import {
 } from "react";
 import { MEETINGS as SEED_MEETINGS, USERS, CURRENT_USER_ID } from "./seed";
 import type { ActionItem, Comment, Highlight, Meeting } from "./types";
+import type { DealStage } from "./deals";
 
 const LS_KEY = "fathom-rework-state-v1";
 
@@ -23,6 +24,9 @@ interface Playlist {
 interface PersistState {
   meetings: Meeting[];
   playlists: Playlist[];
+  keywordAlerts: string[];
+  dealStages: Record<string, DealStage>;
+  dealSyncedAt: Record<string, string>;
 }
 
 interface StoreValue extends PersistState {
@@ -30,12 +34,17 @@ interface StoreValue extends PersistState {
   hydrated: boolean;
   getMeeting: (id: string) => Meeting | undefined;
   addMeeting: (meeting: Meeting) => void;
+  renameMeeting: (meetingId: string, title: string) => void;
   toggleActionItem: (meetingId: string, itemId: string) => void;
   addHighlight: (meetingId: string, h: Omit<Highlight, "id" | "createdAt" | "createdBy">) => void;
   removeHighlight: (meetingId: string, highlightId: string) => void;
   addComment: (meetingId: string, atMs: number, body: string) => void;
   createPlaylist: (name: string) => string;
   addToPlaylist: (playlistId: string, meetingId: string, highlightId: string) => void;
+  addKeywordAlert: (keyword: string) => void;
+  removeKeywordAlert: (keyword: string) => void;
+  setDealStage: (dealId: string, stage: DealStage) => void;
+  syncDeal: (dealId: string) => void;
   reset: () => void;
 }
 
@@ -56,6 +65,9 @@ function seedState(): PersistState {
         ],
       },
     ],
+    keywordAlerts: ["pricing", "competitor", "churn"],
+    dealStages: {},
+    dealSyncedAt: {},
   };
 }
 
@@ -64,7 +76,7 @@ function loadPersisted(): PersistState {
   if (typeof window === "undefined") return base;
   try {
     const raw = window.localStorage.getItem(LS_KEY);
-    if (raw) return JSON.parse(raw) as PersistState;
+    if (raw) return { ...base, ...(JSON.parse(raw) as Partial<PersistState>) };
   } catch {
     /* ignore */
   }
@@ -79,7 +91,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   // Re-read from localStorage after mount (SSR/first render use the seed).
+  // Intentional two-pass hydration, not a synchronization effect: server and
+  // first client render must match exactly, so the real (persisted) value
+  // can only be swapped in once we know we're on the client.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(loadPersisted());
     setHydrated(true);
   }, []);
@@ -110,6 +126,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }));
     },
     [],
+  );
+
+  const renameMeeting = useCallback(
+    (meetingId: string, title: string) =>
+      mutateMeeting(meetingId, (m) => ({ ...m, title })),
+    [mutateMeeting],
   );
 
   const toggleActionItem = useCallback(
@@ -188,6 +210,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const addKeywordAlert = useCallback((keyword: string) => {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return;
+    setState((s) =>
+      s.keywordAlerts.includes(k) ? s : { ...s, keywordAlerts: [...s.keywordAlerts, k] },
+    );
+  }, []);
+
+  const removeKeywordAlert = useCallback((keyword: string) => {
+    setState((s) => ({ ...s, keywordAlerts: s.keywordAlerts.filter((k) => k !== keyword) }));
+  }, []);
+
+  const setDealStage = useCallback((dealId: string, stage: DealStage) => {
+    setState((s) => ({ ...s, dealStages: { ...s.dealStages, [dealId]: stage } }));
+  }, []);
+
+  const syncDeal = useCallback((dealId: string) => {
+    setState((s) => ({ ...s, dealSyncedAt: { ...s.dealSyncedAt, [dealId]: new Date().toISOString() } }));
+  }, []);
+
   const reset = useCallback(() => {
     try {
       window.localStorage.removeItem(LS_KEY);
@@ -204,12 +246,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       hydrated,
       getMeeting,
       addMeeting,
+      renameMeeting,
       toggleActionItem,
       addHighlight,
       removeHighlight,
       addComment,
       createPlaylist,
       addToPlaylist,
+      addKeywordAlert,
+      removeKeywordAlert,
+      setDealStage,
+      syncDeal,
       reset,
     }),
     [
@@ -217,12 +264,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       hydrated,
       getMeeting,
       addMeeting,
+      renameMeeting,
       toggleActionItem,
       addHighlight,
       removeHighlight,
       addComment,
       createPlaylist,
       addToPlaylist,
+      addKeywordAlert,
+      removeKeywordAlert,
+      setDealStage,
+      syncDeal,
       reset,
     ],
   );

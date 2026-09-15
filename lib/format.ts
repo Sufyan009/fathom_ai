@@ -47,3 +47,15 @@ export const PLATFORM_LABEL: Record<Platform, string> = {
 export function platformColor(p: Platform): string {
   return p === "zoom" ? "#2d8cff" : p === "meet" ? "#00897b" : "#5b5fc7";
 }
+
+export function fmtUsd(n: number): string {
+  if (n >= 1000) return `$${Math.round(n / 1000)}k`;
+  return `$${n}`;
+}
+
+export function fmtDaysAgo(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}

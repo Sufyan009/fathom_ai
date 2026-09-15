@@ -68,6 +68,9 @@ export default function RecordPage() {
     setRevealed([]);
     setElapsedMs(0);
     setPhase("recording");
+    // Event-handler-only (never called during render); the purity rule can't
+    // see that this callback only ever runs from the button's onClick.
+    // eslint-disable-next-line react-hooks/purity
     startRef.current = performance.now();
 
     const tick = () => {
@@ -125,7 +128,7 @@ export default function RecordPage() {
   if (phase === "setup") {
     return (
       <div className="max-w-[680px] mx-auto px-8 py-8">
-        <Link href="/" className="inline-flex items-center gap-1 text-[13px] text-[var(--text-2)] hover:text-[var(--text)]">
+        <Link href="/library" className="inline-flex items-center gap-1 text-[13px] text-[var(--text-2)] hover:text-[var(--text)]">
           <span className="rotate-180"><IconChevron width={16} height={16} /></span> Library
         </Link>
         <h1 className="text-[26px] font-bold tracking-tight mt-3">New recording</h1>

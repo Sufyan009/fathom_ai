@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone Node CLI hook scripts, run directly via `node`, outside the
+    // app's ESM/TypeScript build — CommonJS by design, not app source.
+    ".claude/hooks/**",
   ]),
 ]);
 

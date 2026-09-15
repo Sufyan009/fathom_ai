@@ -10,18 +10,32 @@ import { IconSearch, IconCalendar, IconClock, IconStar } from "@/components/icon
 import { fmtDuration, fmtTime, fmtRelative } from "@/lib/format";
 
 type Filter = "all" | "mine" | "team";
+type Sort = "newest" | "oldest" | "longest" | "shortest";
+
+const SORTERS: Record<Sort, (a: import("@/lib/types").Meeting, b: import("@/lib/types").Meeting) => number> = {
+  newest: (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+  oldest: (a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime(),
+  longest: (a, b) => b.durationS - a.durationS,
+  shortest: (a, b) => a.durationS - b.durationS,
+};
 
 export default function LibraryPage() {
   const { meetings, currentUser } = useStore();
   const [filter, setFilter] = useState<Filter>("all");
+  const [sort, setSort] = useState<Sort>("newest");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
+  const allTags = useMemo(
+    () => Array.from(new Set(meetings.flatMap((m) => m.tags))).sort(),
+    [meetings],
+  );
+
   const filtered = useMemo(() => {
-    let list = [...meetings].sort(
-      (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-    );
+    let list = [...meetings].sort(SORTERS[sort]);
     if (filter === "mine") list = list.filter((m) => m.ownerId === currentUser.id);
     if (filter === "team") list = list.filter((m) => m.isTeamShared);
+    if (activeTag) list = list.filter((m) => m.tags.includes(activeTag));
     if (q.trim()) {
       const needle = q.toLowerCase();
       list = list.filter(
@@ -33,7 +47,7 @@ export default function LibraryPage() {
       );
     }
     return list;
-  }, [meetings, filter, q, currentUser.id]);
+  }, [meetings, filter, sort, activeTag, q, currentUser.id]);
 
   const totalMin = meetings.reduce((s, m) => s + m.durationS, 0);
   const totalHighlights = meetings.reduce((s, m) => s + m.highlights.length, 0);
@@ -105,28 +119,59 @@ export default function LibraryPage() {
       </section>
 
       {/* Filter tabs */}
-      <div className="mt-8 flex items-center gap-1 border-b border-[var(--border)]">
-        {(
-          [
-            ["all", "All meetings"],
-            ["mine", "My calls"],
-            ["team", "Team calls"],
-          ] as [Filter, string][]
-        ).map(([f, label]) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className="px-3.5 py-2 text-[13.5px] font-medium -mb-px border-b-2 transition-colors"
-            style={
-              filter === f
-                ? { borderColor: "var(--accent)", color: "var(--accent)" }
-                : { borderColor: "transparent", color: "var(--text-2)" }
-            }
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mt-8 flex items-center gap-1 justify-between border-b border-[var(--border)]">
+        <div className="flex items-center gap-1">
+          {(
+            [
+              ["all", "All meetings"],
+              ["mine", "My calls"],
+              ["team", "Team calls"],
+            ] as [Filter, string][]
+          ).map(([f, label]) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className="px-3.5 py-2 text-[13.5px] font-medium -mb-px border-b-2 transition-colors"
+              style={
+                filter === f
+                  ? { borderColor: "var(--accent)", color: "var(--accent)" }
+                  : { borderColor: "transparent", color: "var(--text-2)" }
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as Sort)}
+          className="mb-1.5 text-[12.5px] font-medium text-[var(--text-2)] bg-[var(--surface)] border border-[var(--border)] rounded-lg px-2 py-1.5 outline-none focus:border-[var(--accent)]"
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="longest">Longest first</option>
+          <option value="shortest">Shortest first</option>
+        </select>
       </div>
+
+      {allTags.length > 0 && (
+        <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+          {allTags.map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTag(activeTag === t ? null : t)}
+              className="chip transition-colors"
+              style={
+                activeTag === t
+                  ? { background: "var(--accent)", color: "#fff" }
+                  : undefined
+              }
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* List */}
       <div className="mt-4 flex flex-col gap-3">

@@ -100,16 +100,16 @@ export function buildMeetingFromRecording(input: RecordInput): Meeting {
 }
 
 // A realistic 1:1 script used to prefill the recorder (editable).
-export const SAMPLE_1ON1 = `Maya: Hey, good to see you. How's the week been?
+export const SAMPLE_1ON1 = `Mohsin: Hey, good to see you. How's the week been?
 Devon: Pretty good honestly. We shipped the incident dashboard on Tuesday and the on-call folks already love it.
-Maya: That's great to hear. Anything getting in your way right now?
+Mohsin: That's great to hear. Anything getting in your way right now?
 Devon: The context switching. I'm on reliability but I'm also in two feature reviews a week, and it's fragmenting my focus.
-Maya: Understood. If we could pull one thing off your plate, what would help most?
+Mohsin: Understood. If we could pull one thing off your plate, what would help most?
 Devon: If one of my reports moved to Sam's pod, I could actually go deep on reliability.
-Maya: That's reasonable. I'll rebalance the team and move one report over this week.
+Mohsin: That's reasonable. I'll rebalance the team and move one report over this week.
 Devon: That would genuinely help. Longer term, I want to be growing toward a tech-lead role.
-Maya: I think the reliability workstream is a perfect proving ground. Let's draft a growth plan with real milestones.
+Mohsin: I think the reliability workstream is a perfect proving ground. Let's draft a growth plan with real milestones.
 Devon: I'd love that. Can we set up time next week to sketch it out?
-Maya: Yes, I'll schedule it and send an agenda beforehand. Anything else on your mind?
+Mohsin: Yes, I'll schedule it and send an agenda beforehand. Anything else on your mind?
 Devon: That's it for me. Thanks for listening.
-Maya: Always. Let's follow up on the growth plan on Friday.`;
+Mohsin: Always. Let's follow up on the growth plan on Friday.`;

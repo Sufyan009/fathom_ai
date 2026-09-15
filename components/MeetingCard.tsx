@@ -1,11 +1,20 @@
+import { useMemo } from "react";
 import Link from "next/link";
 import type { Meeting } from "@/lib/types";
 import { fmtDuration, fmtRelative, fmtTime } from "@/lib/format";
+import { useStore } from "@/lib/store";
 import { AvatarStack, PlatformBadge, Tag, Thumbnail } from "./ui";
-import { IconCheck, IconStar } from "./icons";
+import { IconCheck, IconStar, IconAlert } from "./icons";
 
 export function MeetingCard({ m }: { m: Meeting }) {
   const openItems = m.actionItems.filter((a) => !a.done).length;
+  const { keywordAlerts } = useStore();
+  const matchedAlert = useMemo(() => {
+    if (keywordAlerts.length === 0) return null;
+    const haystack = m.transcript.map((c) => c.text.toLowerCase());
+    return keywordAlerts.find((k) => haystack.some((t) => t.includes(k))) ?? null;
+  }, [keywordAlerts, m.transcript]);
+
   return (
     <Link
       href={`/meeting/${m.id}`}
@@ -23,6 +32,14 @@ export function MeetingCard({ m }: { m: Meeting }) {
             {m.title}
           </h3>
           {m.isTeamShared && <span className="chip shrink-0">Team</span>}
+          {matchedAlert && (
+            <span
+              className="chip shrink-0 inline-flex items-center gap-1 !text-[var(--amber)]"
+              title={`Keyword alert: "${matchedAlert}" was mentioned`}
+            >
+              <IconAlert width={11} height={11} /> {matchedAlert}
+            </span>
+          )}
         </div>
         <div className="mt-1 flex items-center gap-2.5 text-[12.5px] text-[var(--text-3)]">
           <span>{fmtRelative(m.startedAt)}</span>

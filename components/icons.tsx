@@ -73,6 +73,42 @@ export const IconVolume = (p: P) => (
 export const IconMute = (p: P) => (
   <svg {...base(p)}><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor" stroke="none" /><path d="m16 9 5 6M21 9l-5 6" /></svg>
 );
+export const IconEdit = (p: P) => (
+  <svg {...base(p)}><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17z" /><path d="m14 7 3 3" /></svg>
+);
+export const IconDownload = (p: P) => (
+  <svg {...base(p)}><path d="M12 4v11M8 12l4 4 4-4" /><path d="M4 20h16" /></svg>
+);
+export const IconSettings = (p: P) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="3" /><path d="M19.4 13a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V19a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H4a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H10a1.7 1.7 0 0 0 1-1.55V4a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V10a1.7 1.7 0 0 0 1.55 1H20a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z" /></svg>
+);
+export const IconMail = (p: P) => (
+  <svg {...base(p)}><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 6.5 8 6 8-6" /></svg>
+);
+export const IconAlert = (p: P) => (
+  <svg {...base(p)}><path d="M12 3 2 20h20z" /><path d="M12 9.5v4.5M12 17.2v.1" /></svg>
+);
+export const IconArrowRight = (p: P) => (
+  <svg {...base(p)}><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+);
+export const IconRocket = (p: P) => (
+  <svg {...base(p)}><path d="M12 2.5c3 1.5 5 5 5 9-1.5 1-3.5 1.6-5 1.6S8.5 12.5 7 11.5c0-4 2-7.5 5-9Z" /><circle cx="12" cy="9.5" r="1.6" /><path d="M9 15c-1.5 1-2 3-2 5.5 2 0 4-.5 5-2M15 15c1.5 1 2 3 2 5.5-2 0-4-.5-5-2" /></svg>
+);
+export const IconGlobe = (p: P) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z" /></svg>
+);
+export const IconShield = (p: P) => (
+  <svg {...base(p)}><path d="M12 3 4.5 6v6c0 4.5 3 7.5 7.5 9 4.5-1.5 7.5-4.5 7.5-9V6z" /><path d="m8.5 12 2.3 2.3L15.5 9.5" /></svg>
+);
+export const IconBriefcase = (p: P) => (
+  <svg {...base(p)}><rect x="3" y="7.5" width="18" height="12" rx="2.2" /><path d="M8 7.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5" /><path d="M3 12.5h18" /></svg>
+);
+export const IconTrendUp = (p: P) => (
+  <svg {...base(p)}><path d="m4 16 6-6 4 4 6-8" /><path d="M15 6h5v5" /></svg>
+);
+export const IconRefresh = (p: P) => (
+  <svg {...base(p)}><path d="M20 11a8 8 0 0 0-14.9-3.5M4 13a8 8 0 0 0 14.9 3.5" /><path d="M4 4v5h5M20 20v-5h-5" /></svg>
+);
 export const IconLogo = (p: P) => (
   <svg width={26} height={26} viewBox="0 0 32 32" fill="none" {...p}>
     <rect width="32" height="32" rx="9" fill="var(--accent)" />

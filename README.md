@@ -63,10 +63,22 @@ Pushing to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy
 which builds the static export and publishes it to GitHub Pages. Enable it once
 under **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
+## Design language
+
+The marketing page (`/`) matches fathom.ai's own look: a dark "space" surface
+with a drifting starfield, a blue→purple gradient orb, bold rounded headlines,
+and fully pill-shaped CTAs. The in-app surfaces stay light — matching Fathom's
+own in-product screenshots — but share the same blue accent gradient and pill
+buttons, driven by the same CSS custom properties (`app/globals.css`) so the
+whole product reads as one family.
+
 ## Project structure
 
 ```
-app/            routes: library (/), /meeting/[id], /search, /ask, /playlists
+app/
+  (marketing)/  the landing page — / — dark, space-themed, no app chrome
+  (app)/        the product — /library, /meeting/[id], /search, /ask,
+                /playlists, /record — wrapped in the Sidebar layout
 components/     UI + meeting/ (Player, Transcript, RightPanel, ShareModal)
 lib/            types, seed data, summarizer, retrieval, player hook, store
 recon/          product recon notes + proposed data model
