@@ -4,9 +4,11 @@
 
 **An independent rebuild of [Fathom](https://fathom.ai), the AI meeting notetaker.**
 
-Next.js 16 · TypeScript · Tailwind CSS v4 · Static export
+Next.js 16 · TypeScript · Tailwind CSS v4
 
 Not affiliated with or endorsed by Fathom Inc.
+
+**Live:** https://fathomai-nine.vercel.app
 
 </div>
 
@@ -59,7 +61,7 @@ from screenshots.
 - **Styling:** Tailwind CSS v4, CSS custom properties for the design system
 - **State:** React context backed by `localStorage`, no backend or database
 - **Fonts:** Sora (marketing and app UI)
-- **Deployment:** static export, deployed via GitHub Actions to GitHub Pages
+- **Deployment:** Vercel, auto-deployed from `main`
 
 ## Getting started
 
@@ -73,8 +75,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Build
 
 ```bash
-npm run build                       # standard build, outputs to .next
-DEPLOY_TARGET=pages npm run build   # static export with a /fathom_ai base path, for GitHub Pages
+npm run build   # outputs to .next
 ```
 
 ## Project structure
@@ -123,12 +124,11 @@ client. Use the "reset" control in the sidebar to restore the seed state.
 
 ## Deployment
 
-Pushing to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml),
-which builds the static export and publishes it to GitHub Pages. Enable it
-once under **Settings → Pages → Build and deployment → Source: GitHub
-Actions**. If you fork this into a repo with a different name, update the
-`repo` constant in `next.config.ts` to match, or GitHub Pages asset URLs will
-404.
+The project is deployed on Vercel, linked to this repository. Pushing to
+`main` triggers a new production deployment automatically; every other
+branch or pull request gets its own preview deployment. There is no build
+configuration to manage beyond the defaults Vercel infers for a Next.js
+App Router project.
 
 ## What is real and what is mocked
 
