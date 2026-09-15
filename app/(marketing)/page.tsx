@@ -41,7 +41,7 @@ const RESOURCES_MENU = [
   { label: "Playlists", href: "/playlists" },
 ];
 
-const PLATFORMS = ["Zoom", "Google Meet", "Microsoft Teams", "Slack", "Notion", "HubSpot"];
+const PLATFORMS = ["Zoom", "Google Meet", "Gmail", "Slack", "Microsoft Teams", "Asana"];
 
 const SOLUTIONS = [
   { title: "Sales", icon: IconRocket, body: "Every discovery call scored for pain, budget and next steps, synced straight to the pipeline." },
@@ -216,9 +216,9 @@ export default function MarketingHome() {
         </Reveal>
       </section>
 
-      {/* Final CTA: radiating rings */}
-      <section className="relative py-28 px-6 overflow-hidden border-t border-[var(--space-border)]" style={{ background: "linear-gradient(160deg, #2f1a4a, #4a1f5c 45%, #ff6fae 100%)" }}>
-        <Rings />
+      {/* Final CTA: arcs radiating from the corner */}
+      <section className="relative py-28 px-6 overflow-hidden border-t border-[var(--space-border)]" style={{ background: "linear-gradient(135deg, #7a1fd6, #c026d3 55%, #9600ff 100%)" }}>
+        <CornerArcs />
         <Reveal className="relative max-w-[640px] mx-auto text-center">
           <h2 className="text-[clamp(28px,4.5vw,52px)] font-light tracking-[-0.025em]">
             Stop guessing. Ask Fathom.
@@ -927,8 +927,8 @@ function NodeGraph() {
           return (
             <span
               key={label}
-              className="pill-badge absolute !py-2 !px-3.5 !text-[12.5px] hover-lift"
-              style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%,-50%)", background: "var(--space-surface)" }}
+              className="absolute inline-flex items-center gap-1.5 !py-2 !px-3.5 text-[12.5px] font-semibold rounded-full hover-lift"
+              style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%,-50%)", background: "#fff", color: "#14161f" }}
             >
               <PlatformIcon label={label} /> {label}
             </span>
@@ -952,30 +952,30 @@ function NodeGraph() {
 const PLATFORM_COLORS: Record<string, string> = {
   Zoom: "#2d8cff",
   "Google Meet": "#00ac47",
-  "Microsoft Teams": "#5b5fc7",
+  Gmail: "#ea4335",
   Slack: "#e01e5a",
-  Notion: "#2b2b2b",
-  HubSpot: "#ff7a59",
+  "Microsoft Teams": "#5b5fc7",
+  Asana: "#f06a6a",
 };
 
 /** Small, simplified glyphs (not the trademarked logos) that still read as
  *  each platform at a glance, colored to match its brand. */
 function PlatformIcon({ label }: { label: string }) {
-  const color = PLATFORM_COLORS[label] ?? "#fff";
+  const color = PLATFORM_COLORS[label] ?? "#14161f";
   const glyph = (() => {
     switch (label) {
       case "Zoom":
         return <><rect x="2" y="5" width="11" height="10" rx="2.5" fill={color} /><path d="M13 8.3 16.3 6c.5-.35 1.2 0 1.2.6v6.8c0 .6-.7.95-1.2.6L13 11.7Z" fill={color} /></>;
       case "Google Meet":
         return <><rect x="2" y="5" width="11" height="10" rx="2" fill={color} /><path d="M13 8.5 17 6v8l-4-2.5Z" fill={color} opacity="0.7" /></>;
+      case "Gmail":
+        return <><rect x="2" y="4" width="16" height="12" rx="2" fill="none" stroke={color} strokeWidth="1.6" /><path d="m3 5 7 6 7-6" stroke={color} strokeWidth="1.6" fill="none" /></>;
       case "Microsoft Teams":
         return <><circle cx="8" cy="7" r="3" fill={color} /><rect x="3" y="10" width="12" height="7" rx="2" fill={color} opacity="0.85" /></>;
       case "Slack":
         return <><rect x="3" y="3" width="5" height="5" rx="1.5" fill={color} /><rect x="12" y="3" width="5" height="5" rx="1.5" fill={color} opacity="0.7" /><rect x="3" y="12" width="5" height="5" rx="1.5" fill={color} opacity="0.5" /><rect x="12" y="12" width="5" height="5" rx="1.5" fill={color} opacity="0.35" /></>;
-      case "Notion":
-        return <rect x="3" y="3" width="14" height="14" rx="3" fill={color} />;
-      case "HubSpot":
-        return <><circle cx="10" cy="10" r="7" fill="none" stroke={color} strokeWidth="2" /><circle cx="10" cy="10" r="2.4" fill={color} /></>;
+      case "Asana":
+        return <><circle cx="10" cy="4.5" r="3" fill={color} /><circle cx="5" cy="13" r="3" fill={color} opacity="0.8" /><circle cx="15" cy="13" r="3" fill={color} opacity="0.6" /></>;
       default:
         return <circle cx="10" cy="10" r="6" fill={color} />;
     }
@@ -987,12 +987,25 @@ function PlatformIcon({ label }: { label: string }) {
   );
 }
 
-function Rings() {
-  const sizes = [140, 280, 420, 560, 700];
+/** Concentric arcs radiating from the bottom-left corner, like ripples,
+ *  matching fathom.ai's final-CTA backdrop. */
+function CornerArcs() {
+  const sizes = [160, 320, 480, 640, 800, 960];
   return (
-    <div className="rings">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {sizes.map((s) => (
-        <span key={s} style={{ width: s, height: s }} />
+        <span
+          key={s}
+          className="absolute rounded-full"
+          style={{
+            width: s,
+            height: s,
+            left: 0,
+            bottom: 0,
+            transform: "translate(-50%, 50%)",
+            border: "1px solid rgba(255, 200, 150, 0.35)",
+          }}
+        />
       ))}
     </div>
   );
@@ -1025,37 +1038,49 @@ function TrustItem({ icon: Icon, title, body }: { icon: typeof IconSparkle; titl
 }
 
 const FOOTER_COLS = [
-  { heading: "Product", links: ["Library", "Search", "Ask Fathom", "Playlists"] },
-  { heading: "Company", links: ["About this rebuild", "Product recon", "Agent logs"] },
-  { heading: "Resources", links: ["README", "Data model"] },
+  { heading: "Product", links: [{ l: "Library", href: "/library" }, { l: "Search", href: "/search" }, { l: "Ask Fathom", href: "/ask" }, { l: "Playlists", href: "/playlists" }] },
+  { heading: "Solutions", links: [{ l: "For sales", href: "#solutions" }, { l: "For customer success", href: "#solutions" }, { l: "For teams", href: "#teams" }] },
+  { heading: "Integrations", links: [{ l: "Zoom", href: "#integrations" }, { l: "Google Meet", href: "#integrations" }, { l: "Slack", href: "#integrations" }, { l: "Microsoft Teams", href: "#integrations" }] },
+  { heading: "Resources", links: [{ l: "Deals (CRM)", href: "/deals" }, { l: "Settings", href: "/settings" } ] },
 ];
 
 function SiteFooter() {
   return (
     <footer className="border-t border-[var(--space-border)] py-14 px-6">
-      <div className="max-w-[1100px] mx-auto">
-        <div className="grid sm:grid-cols-[1.4fr_repeat(3,1fr)] gap-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <IconLogo />
-              <span className="font-bold text-[16px]">Fathom</span>
-            </div>
-            <p className="text-[12.5px] text-[var(--space-text-2)] mt-3 max-w-[240px] leading-relaxed">
-              An independent, unaffiliated rebuild of fathom.video built as a
-              take-home assessment. Not the real product.
-            </p>
+      <div className="max-w-[1200px] mx-auto">
+        <div className="flex items-center justify-between gap-4 flex-wrap pb-8 mb-8 border-b border-[var(--space-border)]">
+          <div className="flex items-center gap-2">
+            <IconLogo />
+            <span className="font-bold text-[18px]">Fathom</span>
           </div>
+          <Link href="/library" className="btn btn-lg" style={{ background: "#fff", color: "#14161f" }}>
+            Try Fathom today
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-[1.4fr_repeat(4,1fr)] gap-8">
+          <p className="text-[12.5px] text-[var(--space-text-2)] max-w-[240px] leading-relaxed">
+            An independent, unaffiliated rebuild of fathom.video built as a
+            take-home assessment. Not the real product.
+          </p>
           {FOOTER_COLS.map((col) => (
             <div key={col.heading}>
               <h5 className="text-[12px] font-semibold uppercase tracking-wider text-white/70">{col.heading}</h5>
               <ul className="mt-3 space-y-2">
-                {col.links.map((l) => (
-                  <li key={l}>
-                    <Link href="/library" className="text-[13px] text-[var(--space-text-2)] hover:text-white fathom-link">
-                      {l}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map(({ l, href }) =>
+                  href.startsWith("/") ? (
+                    <li key={l}>
+                      <Link href={href} className="text-[13px] text-[var(--space-text-2)] hover:text-white fathom-link">
+                        {l}
+                      </Link>
+                    </li>
+                  ) : (
+                    <li key={l}>
+                      <a href={href} className="text-[13px] text-[var(--space-text-2)] hover:text-white fathom-link">
+                        {l}
+                      </a>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           ))}

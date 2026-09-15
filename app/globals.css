@@ -255,20 +255,6 @@ body {
   animation: pulseGlow 4s ease-in-out infinite;
 }
 
-/* Radiating concentric rings (final CTA backdrop) */
-.rings {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-.rings span {
-  position: absolute;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
