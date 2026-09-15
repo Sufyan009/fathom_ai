@@ -247,6 +247,19 @@ body {
   mask-image: radial-gradient(circle at center, #000 40%, transparent 75%);
 }
 
+/* Slow auto-scroll for the orb's summary preview, looping the content
+   upward to show more of the mock without any user interaction. */
+@keyframes autoscroll {
+  0%, 15% { transform: translateY(0); }
+  85%, 100% { transform: translateY(-46%); }
+}
+.auto-scroll-content {
+  animation: autoscroll 9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .auto-scroll-content { animation: none; }
+}
+
 @keyframes pulseGlow {
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 0.9; transform: scale(1.08); }

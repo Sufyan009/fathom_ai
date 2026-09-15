@@ -22,17 +22,19 @@ import {
 } from "@/components/icons";
 
 const SOLUTIONS_MENU = [
-  { label: "For sales teams", href: "#solutions" },
   { label: "For customer success", href: "#solutions" },
-  { label: "For product & eng", href: "#solutions" },
+  { label: "For sales", href: "#solutions" },
   { label: "For teams", href: "#teams" },
 ];
 
 const INTEGRATIONS_MENU = [
   { label: "Zoom", href: "#integrations" },
   { label: "Google Meet", href: "#integrations" },
+  { label: "Gmail", href: "#integrations" },
+  { label: "Slack", href: "#integrations" },
   { label: "Microsoft Teams", href: "#integrations" },
-  { label: "Slack, Notion & more", href: "#integrations" },
+  { label: "Asana", href: "#integrations" },
+  { label: "See all integrations", href: "#integrations" },
 ];
 
 const RESOURCES_MENU = [
@@ -738,18 +740,26 @@ function PillarsOrb() {
         </div>
 
         <div className="relative w-[380px] h-[380px] mx-auto orb orb-float grid place-items-center shrink-0">
-          <div className="w-[300px] rounded-[28px] p-4 shadow-2xl hover-lift" style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}>
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: "#7db4ff" }}>
-              <p.icon width={13} height={13} /> {p.title.toUpperCase()}
-            </div>
-            <div className="mt-3 space-y-2">
-              <div className="h-2 rounded-full bg-white/10 w-[88%]" />
-              <div className="h-2 rounded-full bg-white/10 w-[70%]" />
-              <div className="h-2 rounded-full bg-white/10 w-[80%]" />
-              <div className="h-2 rounded-full bg-white/10 w-[60%]" />
-            </div>
-            <div className="mt-3 rounded-lg px-3 py-2 text-[11.5px] font-medium" style={{ background: "var(--accent-gradient)" }}>
-              {p.eyebrow}
+          <div className="w-[300px] h-[220px] rounded-[28px] p-4 shadow-2xl hover-lift overflow-hidden" style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}>
+            <div key={p.title} className="auto-scroll-content">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: "#7db4ff" }}>
+                <p.icon width={13} height={13} /> {p.title.toUpperCase()}
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="h-2 rounded-full bg-white/10 w-[88%]" />
+                <div className="h-2 rounded-full bg-white/10 w-[70%]" />
+                <div className="h-2 rounded-full bg-white/10 w-[80%]" />
+                <div className="h-2 rounded-full bg-white/10 w-[60%]" />
+              </div>
+              <div className="mt-3 rounded-lg px-3 py-2 text-[11.5px] font-medium" style={{ background: "var(--accent-gradient)" }}>
+                {p.eyebrow}
+              </div>
+              <div className="mt-4 text-[11px] font-semibold" style={{ color: "#7db4ff" }}>ACTION ITEMS</div>
+              <div className="mt-2 space-y-2">
+                <div className="h-2 rounded-full bg-white/10 w-[75%]" />
+                <div className="h-2 rounded-full bg-white/10 w-[65%]" />
+                <div className="h-2 rounded-full bg-white/10 w-[85%]" />
+              </div>
             </div>
           </div>
         </div>
