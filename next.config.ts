@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 // For a GitHub Pages *project* site the app is served under /<repo>, so set
 // DEPLOY_TARGET=pages at build time to apply the basePath. Vercel/local need none.
 const isPages = process.env.DEPLOY_TARGET === "pages";
-const repo = "fathom-ai-rework";
+const repo = "fathom_ai";
 
 const nextConfig: NextConfig = {
   // Static export only for GitHub Pages. On Vercel (default) run the full Next
