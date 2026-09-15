@@ -11,7 +11,7 @@ import {
 } from "react";
 import { MEETINGS as SEED_MEETINGS, USERS, CURRENT_USER_ID } from "./seed";
 import type { ActionItem, Comment, Highlight, Meeting } from "./types";
-import type { DealStage } from "./deals";
+import type { Deal, DealStage } from "./deals";
 
 const LS_KEY = "fathom-rework-state-v1";
 
@@ -27,6 +27,7 @@ interface PersistState {
   keywordAlerts: string[];
   dealStages: Record<string, DealStage>;
   dealSyncedAt: Record<string, string>;
+  customDeals: Deal[];
 }
 
 interface StoreValue extends PersistState {
@@ -45,6 +46,7 @@ interface StoreValue extends PersistState {
   removeKeywordAlert: (keyword: string) => void;
   setDealStage: (dealId: string, stage: DealStage) => void;
   syncDeal: (dealId: string) => void;
+  addDeal: (deal: Omit<Deal, "id" | "lastActivityAt">) => void;
   reset: () => void;
 }
 
@@ -68,6 +70,7 @@ function seedState(): PersistState {
     keywordAlerts: ["pricing", "competitor", "churn"],
     dealStages: {},
     dealSyncedAt: {},
+    customDeals: [],
   };
 }
 
@@ -230,6 +233,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, dealSyncedAt: { ...s.dealSyncedAt, [dealId]: new Date().toISOString() } }));
   }, []);
 
+  const addDeal = useCallback((deal: Omit<Deal, "id" | "lastActivityAt">) => {
+    setState((s) => ({
+      ...s,
+      customDeals: [
+        ...s.customDeals,
+        { ...deal, id: nextId("d"), lastActivityAt: new Date().toISOString() },
+      ],
+    }));
+  }, []);
+
   const reset = useCallback(() => {
     try {
       window.localStorage.removeItem(LS_KEY);
@@ -257,6 +270,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeKeywordAlert,
       setDealStage,
       syncDeal,
+      addDeal,
       reset,
     }),
     [
@@ -275,6 +289,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeKeywordAlert,
       setDealStage,
       syncDeal,
+      addDeal,
       reset,
     ],
   );

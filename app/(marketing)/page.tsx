@@ -97,9 +97,19 @@ export default function MarketingHome() {
             Every meeting becomes a searchable transcript, a template-driven summary
             and a list of action items, automatically, while you stay in the conversation.
           </p>
-          <div className="mt-10 grid md:grid-cols-2 gap-5">
-            <MockSummaryCard />
-            <MockAskCard />
+          <div className="mt-10">
+            <Carousel
+              slides={[
+                <div key="s1" className="grid md:grid-cols-2 gap-5">
+                  <MockSummaryCard />
+                  <MockAskCard />
+                </div>,
+                <div key="s2" className="grid md:grid-cols-2 gap-5">
+                  <MockActionItemsCard />
+                  <MockHighlightsCard />
+                </div>,
+              ]}
+            />
           </div>
         </Reveal>
       </section>
@@ -558,6 +568,120 @@ function MockAskCard() {
       <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: "#7db4ff" }}>
         <IconPlay width={10} height={10} /> 15:00 · Q3 Roadmap Planning
       </div>
+    </div>
+  );
+}
+
+function MockActionItemsCard() {
+  const items = [
+    { text: "Send SOC 2 report and DPA to Dana", done: true },
+    { text: "Share Salesforce auto-sync demo recording", done: false },
+    { text: "Loop in Alex's SE for a security questionnaire", done: false },
+  ];
+  return (
+    <div className="rounded-[28px] p-5 hover-lift" style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}>
+      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold" style={{ color: "#7db4ff" }}>
+        <IconCheck width={13} height={13} /> ACTION ITEMS
+      </div>
+      <ul className="mt-3 space-y-2.5">
+        {items.map((it) => (
+          <li key={it.text} className="flex items-start gap-2 text-[13px]">
+            <span
+              className="mt-0.5 w-[15px] h-[15px] rounded-md grid place-items-center shrink-0"
+              style={it.done ? { background: "var(--accent)" } : { border: "1px solid var(--space-border)" }}
+            >
+              {it.done && <IconCheck width={10} height={10} className="text-white" />}
+            </span>
+            <span style={{ color: it.done ? "var(--space-text-2)" : "#fff", textDecoration: it.done ? "line-through" : "none" }}>{it.text}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 pt-3 border-t" style={{ borderColor: "var(--space-border)" }}>
+        <span className="pill-badge !py-1.5 !px-3 !text-[11px]"><IconArrowRight width={10} height={10} /> Synced to Salesforce</span>
+      </div>
+    </div>
+  );
+}
+
+function MockHighlightsCard() {
+  return (
+    <div className="rounded-[28px] p-5 hover-lift" style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}>
+      <div className="flex items-center gap-1.5 text-[11.5px] font-semibold" style={{ color: "#7db4ff" }}>
+        <IconStar width={13} height={13} /> HIGHLIGHTS
+      </div>
+      <div className="mt-3 space-y-2.5">
+        {[
+          { t: "4:10", who: "Sam", text: "Can I zoom out? If activation is flat..." },
+          { t: "15:00", who: "Maya", text: "Guided setup is the headline activation bet." },
+        ].map((h) => (
+          <div key={h.t} className="flex gap-2.5 text-[12.5px]">
+            <span className="tabular-nums shrink-0" style={{ color: "#7db4ff" }}>{h.t}</span>
+            <p className="text-[var(--space-text-2)]"><span className="font-semibold text-white">{h.who}: </span>{h.text}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 pt-3 border-t" style={{ borderColor: "var(--space-border)" }}>
+        <span className="pill-badge !py-1.5 !px-3 !text-[11px]">+ Add to playlist</span>
+      </div>
+    </div>
+  );
+}
+
+/** A lightweight carousel: swipeable slides, dot pagination, prev/next
+ *  arrows, and auto-advance that pauses on hover, matching the slider
+ *  fathom.ai runs on Swiper.js for its own hero feature strip. */
+function Carousel({ slides, intervalMs = 4500 }: { slides: React.ReactNode[]; intervalMs?: number }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused || slides.length <= 1) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), intervalMs);
+    return () => clearInterval(id);
+  }, [paused, slides.length, intervalMs]);
+
+  return (
+    <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div className="overflow-hidden rounded-[28px]">
+        <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
+          {slides.map((slide, i) => (
+            <div key={i} className="w-full shrink-0">
+              {slide}
+            </div>
+          ))}
+        </div>
+      </div>
+      {slides.length > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={() => setIndex((i) => (i - 1 + slides.length) % slides.length)}
+            className="w-8 h-8 rounded-full grid place-items-center hover-lift"
+            style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}
+            aria-label="Previous"
+          >
+            <IconChevron width={14} height={14} className="rotate-180" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className="rounded-full transition-all"
+                style={{ width: i === index ? 20 : 7, height: 7, background: i === index ? "var(--accent)" : "var(--space-border)" }}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => setIndex((i) => (i + 1) % slides.length)}
+            className="w-8 h-8 rounded-full grid place-items-center hover-lift"
+            style={{ background: "var(--space-surface)", border: "1px solid var(--space-border)" }}
+            aria-label="Next"
+          >
+            <IconChevron width={14} height={14} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

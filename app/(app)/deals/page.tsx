@@ -2,12 +2,12 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { DEALS, STAGES, dealsByStage, type Deal } from "@/lib/deals";
+import { DEALS, STAGES, dealsByStage, type Deal, type DealStage } from "@/lib/deals";
 import { fmtUsd } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealDrawer } from "@/components/deals/DealDrawer";
-import { IconBriefcase, IconTrendUp, IconCheck, IconShield } from "@/components/icons";
+import { IconBriefcase, IconTrendUp, IconCheck, IconShield, IconSearch, IconClose } from "@/components/icons";
 
 export default function DealsPage() {
   return (
@@ -18,16 +18,28 @@ export default function DealsPage() {
 }
 
 function DealsPageInner() {
-  const { dealStages } = useStore();
+  const { dealStages, customDeals, currentUser, addDeal } = useStore();
   const searchParams = useSearchParams();
   const [openDealId, setOpenDealId] = useState<string | null>(searchParams.get("deal"));
+  const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+
+  const allDeals = useMemo<Deal[]>(() => [...DEALS, ...customDeals], [customDeals]);
 
   const deals = useMemo<Deal[]>(
-    () => DEALS.map((d) => (dealStages[d.id] ? { ...d, stage: dealStages[d.id] } : d)),
-    [dealStages],
+    () => allDeals.map((d) => (dealStages[d.id] ? { ...d, stage: dealStages[d.id] } : d)),
+    [allDeals, dealStages],
   );
 
-  const columns = useMemo(() => dealsByStage(deals), [deals]);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return deals;
+    return deals.filter(
+      (d) => d.company.toLowerCase().includes(q) || d.contactName.toLowerCase().includes(q) || d.owner.toLowerCase().includes(q),
+    );
+  }, [deals, query]);
+
+  const columns = useMemo(() => dealsByStage(filtered), [filtered]);
   const openDeal = deals.find((d) => d.id === openDealId) ?? null;
 
   const openValue = deals.filter((d) => d.stage !== "closed_won").reduce((s, d) => s + d.valueUsd, 0);
@@ -36,7 +48,7 @@ function DealsPageInner() {
 
   return (
     <div className="px-8 py-8 max-w-[1400px] mx-auto">
-      <header>
+      <header className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2.5">
           <span className="w-9 h-9 rounded-xl bg-[var(--accent-soft)] text-[var(--accent)] grid place-items-center">
             <IconBriefcase width={19} height={19} />
@@ -47,6 +59,18 @@ function DealsPageInner() {
               Sales and customer success calls, synced into a pipeline.
             </p>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <IconSearch width={15} height={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search deals..."
+              className="w-[200px] pl-9 pr-3 py-2 rounded-[10px] bg-[var(--surface)] border border-[var(--border)] text-[13.5px] outline-none focus:border-[var(--accent)] transition-colors"
+            />
+          </div>
+          <button onClick={() => setAddOpen(true)} className="btn btn-primary">+ New deal</button>
         </div>
       </header>
 
@@ -97,7 +121,88 @@ function DealsPageInner() {
       </div>
 
       {openDeal && <DealDrawer deal={openDeal} onClose={() => setOpenDealId(null)} />}
+      {addOpen && (
+        <AddDealModal
+          defaultOwner={currentUser.name}
+          onClose={() => setAddOpen(false)}
+          onCreate={(deal) => { addDeal(deal); setAddOpen(false); }}
+        />
+      )}
     </div>
+  );
+}
+
+function AddDealModal({
+  defaultOwner,
+  onClose,
+  onCreate,
+}: {
+  defaultOwner: string;
+  onClose: () => void;
+  onCreate: (deal: Omit<Deal, "id" | "lastActivityAt">) => void;
+}) {
+  const [company, setCompany] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [valueUsd, setValueUsd] = useState(10000);
+  const [stage, setStage] = useState<DealStage>("discovery");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!company.trim()) return;
+    onCreate({
+      company: company.trim(),
+      contactName: contactName.trim() || "TBD",
+      contactEmail: contactEmail.trim() || "-",
+      owner: defaultOwner,
+      stage,
+      valueUsd,
+      health: "green",
+      crmSystem: "hubspot",
+      meetingIds: [],
+      nextStep: "Book a discovery call",
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      <form onSubmit={submit} className="relative card !rounded-2xl w-full max-w-[420px] p-6 animate-in" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={onClose} className="absolute top-4 right-4 text-[var(--text-3)] hover:text-[var(--text)]">
+          <IconClose />
+        </button>
+        <h3 className="font-bold text-[17px]">New deal</h3>
+        <p className="text-[13px] text-[var(--text-2)] mt-1">Adds a deal to the pipeline. No call linked yet.</p>
+        <div className="mt-4 space-y-3">
+          <Field label="Company"><input required value={company} onChange={(e) => setCompany(e.target.value)} className="inp" /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Contact name"><input value={contactName} onChange={(e) => setContactName(e.target.value)} className="inp" /></Field>
+            <Field label="Contact email"><input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className="inp" /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Value (USD)">
+              <input type="number" min={0} value={valueUsd} onChange={(e) => setValueUsd(Number(e.target.value))} className="inp" />
+            </Field>
+            <Field label="Stage">
+              <select value={stage} onChange={(e) => setStage(e.target.value as DealStage)} className="inp">
+                {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            </Field>
+          </div>
+        </div>
+        <button type="submit" className="btn btn-primary w-full justify-center mt-5">Create deal</button>
+        <style>{`.inp{width:100%;padding:.5rem .7rem;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);font-size:13.5px;outline:none}.inp:focus{border-color:var(--accent)}`}</style>
+      </form>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-[11.5px] font-medium text-[var(--text-2)] mb-1">{label}</span>
+      {children}
+    </label>
   );
 }
 

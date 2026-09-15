@@ -7,12 +7,25 @@ import { STAGES } from "@/lib/deals";
 import { useStore } from "@/lib/store";
 import { fmtUsd, fmtDaysAgo, fmtDate } from "@/lib/format";
 import { Avatar } from "../ui";
-import { IconClose, IconPlay, IconRefresh, IconCheck, IconAlert } from "../icons";
+import { IconClose, IconPlay, IconRefresh, IconCheck, IconAlert, IconGauge, IconRadar } from "../icons";
 
 const CRM_LABEL: Record<NonNullable<Deal["crmSystem"]>, string> = {
   salesforce: "Salesforce",
   hubspot: "HubSpot",
 };
+
+// Deterministic per-deal scorecard numbers (no backend to compute a real one
+// from) so the same deal always shows the same score within a session.
+function scorecardFor(dealId: string) {
+  let seed = 0;
+  for (const c of dealId) seed = (seed * 31 + c.charCodeAt(0)) % 1000;
+  const pick = (base: number, spread: number) => base + (seed % spread);
+  return [
+    { label: "Talk/listen ratio", value: pick(48, 30), color: "#00beff" },
+    { label: "Questions asked", value: pick(55, 35), color: "#9600ff" },
+    { label: "Next steps confirmed", value: pick(60, 38), color: "#ff9fc7" },
+  ];
+}
 
 export function DealDrawer({ deal, onClose }: { deal: Deal; onClose: () => void }) {
   const { getMeeting, setDealStage, syncDeal, dealSyncedAt } = useStore();
@@ -107,6 +120,37 @@ export function DealDrawer({ deal, onClose }: { deal: Deal; onClose: () => void 
               <p className="text-[11.5px] text-[var(--text-3)] mt-1">
                 {syncedAt ? `Last synced ${fmtDaysAgo(syncedAt)}` : "Not synced this session"} · Amount, Stage, Next Step, Contact
               </p>
+            </div>
+          )}
+
+          {/* AI Scorecard — only meaningful once there's a call to score */}
+          {meetings.length > 0 && (
+            <div className="card p-3.5">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg grid place-items-center" style={{ background: "var(--accent-gradient)" }}>
+                  <IconGauge width={14} height={14} className="text-white" />
+                </span>
+                <p className="text-[12.5px] font-semibold">AI coaching scorecard</p>
+              </div>
+              <div className="mt-3 space-y-3">
+                {scorecardFor(deal.id).map((m) => (
+                  <div key={m.label}>
+                    <div className="flex items-center justify-between text-[11.5px] mb-1">
+                      <span className="text-[var(--text-3)]">{m.label}</span>
+                      <span className="font-semibold">{m.value}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[var(--surface-2)] overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-start gap-2">
+                <IconRadar width={13} height={13} className="mt-0.5 shrink-0 text-[var(--text-3)]" />
+                <p className="text-[11.5px] text-[var(--text-3)] leading-relaxed">
+                  Generated from {meetings.length} linked call{meetings.length !== 1 ? "s" : ""}. Flagged for the team playbook.
+                </p>
+              </div>
             </div>
           )}
 
