@@ -647,7 +647,7 @@ function NodeGraph() {
           );
         })}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-[28px] grid place-items-center orb-float" style={{ background: "var(--accent-gradient)" }}>
-          <IconLogo width={30} height={30} />
+          <IconLogo width={30} height={30} style={{ color: "#fff" }} />
         </div>
         {nodes.map((label, i) => {
           const angle = (i / nodes.length) * 2 * Math.PI - Math.PI / 2;

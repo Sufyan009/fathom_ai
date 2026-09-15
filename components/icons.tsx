@@ -121,10 +121,13 @@ export const IconBell = (p: P) => (
 export const IconUser = (p: P) => (
   <svg {...base(p)}><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg>
 );
+// Fathom's real mark: two parallel angled bars (a stylized "F" / flag) with
+// a small darker foot, traced from the brand's own SVG. Uses currentColor so
+// each call site controls color via CSS `color`; defaults to the accent.
 export const IconLogo = (p: P) => (
-  <svg width={26} height={26} viewBox="0 0 32 32" fill="none" {...p}>
-    <rect width="32" height="32" rx="9" fill="var(--accent)" />
-    <path d="M9 20.5c3-9 11-9 14 0" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-    <circle cx="16" cy="12" r="2.2" fill="#fff" />
+  <svg width={26} height={26} viewBox="0 0 24 24" fill="none" style={{ color: "var(--accent)" }} {...p}>
+    <path d="M4 15.5 16.5 6" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    <path d="M4 20 11 14.6" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    <circle cx="4" cy="20.6" r="1.9" fill="currentColor" opacity="0.55" />
   </svg>
 );
